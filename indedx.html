@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+    <link href="styles.css" rel="stylesheet">
+    <title>My Webpage</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<style>
+    .homepagebackground {
+    height: 10vh;
+    overflow: hidden;
+    z-index: -10;
+    background: rgb(155, 194, 198);
+}
+
+.greetingtext {
+    position: absolute;
+    top: 5%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0 auto;
+    font-size: 50px;
+}
+
+body {
+    background: rgb(255, 255, 255);
+    
+}
+
+.graphbackground {
+    background: rgb(255, 255, 255);
+    width: 80vw;
+    max-width: 800px;
+    margin: 0 auto; 
+    padding: 20px; /* Added padding for spacing */
+    box-sizing: border-box; /* Ensures padding is included in width */
+}
+
+.income-table {
+    background: rgb(255, 255, 255);
+    margin-bottom: 20px;
+}
+
+.chartground {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+}
+
+#wealthChart {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.add-money-flow {
+    margin-top: 20px;
+}
+
+.remove-btn {
+    margin-top: 10px;
+}
+
+.title-heading1 {
+    font-size: 20px;
+}
+</style>
+
+<body>
+    <div class="col-12">
+        <div class="homepagebackground">
+            <h1 class="greetingtext">FINANCE VIEWER</h1>
+        </div>
+    </div>
+    <div class="col-12">
+
+        <div class="graphbackground">
+            <div class="chartground">
+                <canvas id="wealthChart" class="w-100"></canvas>
+            </div>
+            <div class="mb-3">
+                <label for="timeInput" class="form-label">Set Time:</label>
+                <input class="form-control" type="number" id="timeInput" value="5" min="0" max="" step="1" oninput="updateChart()">    
+            </div>
+            <div class="mb-3">
+                <label for="initialInput" class="form-label">Initial Input:</label>
+                <input class="form-control" type="number" id="initialInput" value="0" min="0" max="" step="1" oninput="updateChart()">
+            </div>
+            <div class="mb-3">
+                <label for="displayType" class="form-label">Display Type:</label>
+                <select class="form-select" id="displayType" onchange="updateChart()">
+                    <option value="overall">Overall Wealth</option>
+                    <option value="individual">Individual Lines</option>
+                </select>
+            </div>
+        
+            <div class="add-money-flow mb-3">
+                <button class="btn btn-primary" onclick="addMoneyFlow()">Add Money Flow</button>
+            </div>
+        
+            <table class="income-table table table-striped table-bordered" id="incomeTable" oninput="updateChart()">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Increase</th>
+                        <th>Frequency</th>
+                        <th></th>
+                        <th>Percentage Initial</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="money-flow-row" data-rowid="1">
+                        <td class="col-md-3">
+                            <input class="form-control" type="text" id="nameInput1" placeholder="Enter name">
+                        </td>
+                        <td class="col-md-2">
+                            <input class="form-control" type="number" id="amountInput1" value="0">
+                        </td>
+                        <td class="col-md-2">
+                            <input class="form-control" type="number" id="frequencyInput1" value="1">
+                        </td>
+                        <td class="col-md-2">
+                            <select class="form-select" id="modeSelect1" onchange="toggleInitialAmount(this)">
+                                <option value="linear">Linear</option>
+                                <option value="percentage">Percentage</option>
+                            </select>
+                        </td>
+                        <td class="col-md-3" id="initialAmountCell1">
+                            <input class="form-control" type="number" id="initialAmountInput1" value="0" placeholder="Initial Amount" disabled>
+                        </td>
+                    </tr>                
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <br>
+    <div class="col-12">
+        <div class="homepagebackground">
+            
+        </div>
+    </div>
+    
+
+    <script>
+        let xValues = [1, 2, 3, 4, 5];
+        let yValues = [0, 0, 0, 0, 0];
+        let wealthChart;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            wealthChart = new Chart(document.getElementById('wealthChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: xValues,
+                    datasets: [{
+                        label: 'Wealth Over Time',
+                        data: yValues,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom'
+                        },
+                        y: {}
+                    }
+                }
+            });
+            colors = [''];
+        });
+
+        
+
+        function updateChart() {
+            const displayType = document.getElementById('displayType').value;
+
+            if (displayType === 'overall') {
+                updateChart1();
+            } else if (displayType === 'individual') {
+                updateChartIndividual();
+            }
+
+            // Reset chart data when switching back to overall display
+            if (currentDisplayType === 'individual' && displayType === 'overall') {
+                resetChartData();
+            }
+
+            currentDisplayType = displayType;
+        }
+
+        function updateChart1() {
+            // Remove existing dataset if it exists
+            if (wealthChart.data.datasets.length > 0) {
+                wealthChart.data.datasets = [];
+            }
+
+            const timeInput = document.getElementById('timeInput');
+            const time = parseInt(timeInput.value);
+            const initialInput = document.getElementById('initialInput');
+            const initialInputValue = parseInt(initialInput.value) / 2;
+
+            // Reset chart data
+            xValues = Array.from({ length: time }, (_, index) => index + 1);
+            yValues = Array(time).fill(initialInputValue);
+
+            const incomeTable = document.getElementById('incomeTable');
+            const rows = incomeTable.querySelectorAll('tr');
+
+            for (let rowIndex = 1; rowIndex < rows.length; rowIndex++) {
+                const row = rows[rowIndex];
+                const amount = parseFloat(row.querySelector('input[type="number"]').value);
+                const frequency = parseFloat(row.querySelectorAll('input[type="number"]')[1].value);
+                const mode = row.querySelector('select').value;
+                let initialAmount = parseFloat(row.querySelectorAll('input[type="number"]')[2].value);
+
+                let totalWealth = initialInputValue;
+                let newPercent = 0;
+
+
+                for (let i = 0; i < time; i++) {
+                    if ((i + 1) % frequency === 0) {
+                        if (mode == 'linear') {
+
+                            totalWealth += amount;
+                        }
+                        else if (mode == 'percentage') {
+                            newPercent = initialAmount
+                            
+                            totalWealth += (amount / 100) * newPercent;
+
+                            initialAmount += (amount / 100) * newPercent; 
+
+                        }
+                    }
+                    yValues[i] += totalWealth;
+                }
+            }
+
+            // Add new dataset for the "Overall Wealth" chart
+            const dataset = {
+                label: 'Wealth Over Time',
+                data: yValues,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                fill: false
+            };
+            wealthChart.data.datasets.push(dataset);
+
+            // Update chart with new data
+            wealthChart.data.labels = xValues;
+            wealthChart.options.scales.y = {};
+            wealthChart.update();
+        }
+
+
+
+        function resetChartData() {
+            wealthChart.data.datasets = [{
+                label: 'Wealth Over Time',
+                data: yValues.slice(), // Use slice to create a copy of yValues
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                fill: false
+            }];
+            wealthChart.update();
+        }
+
+
+        function toggleInitialAmount(select) {
+            const mode = select.value;
+            const initialAmountCell = select.parentElement.nextElementSibling; // Get the cell containing the initial amount input
+
+            // Check if the parent row has the class 'money-flow-row'
+            if (select.parentElement.parentElement.classList.contains('money-flow-row')) {
+                if (mode === 'percentage') {
+                    initialAmountCell.querySelector('input').disabled = false; 
+                } else {
+                    initialAmountCell.querySelector('input').disabled = true;
+                }
+            }
+        }
+
+
+
+
+
+        function addMoneyFlow() {
+            const moneyFlowTable = document.querySelector('.income-table');
+
+            // Create a new row element
+            const newRow = document.createElement('tr');
+            newRow.classList.add('money-flow-row');
+
+            // Set the row's data-rowid attribute
+            const newRowId = moneyFlowTable.querySelectorAll('.money-flow-row').length + 1;
+            newRow.dataset.rowid = newRowId;
+
+            // Create cells for the new row with Bootstrap styling
+            const nameCell = document.createElement('td');
+            const amountCell = document.createElement('td');
+            const frequencyCell = document.createElement('td');
+            const modeCell = document.createElement('td');
+            const initialAmountCell = document.createElement('td');
+
+            // Create input elements for each cell with Bootstrap form-control class and wider width
+            const nameInput = document.createElement('input');
+            const amountInput = document.createElement('input');
+            const frequencyInput = document.createElement('input');
+            const modeSelect = document.createElement('select');
+            const initialAmountInput = document.createElement('input');
+
+            // Add Bootstrap form-control class to inputs and select
+            nameInput.classList.add('form-control', 'w-100'); // Wider width class added
+            amountInput.classList.add('form-control', 'w-100'); // Wider width class added
+            frequencyInput.classList.add('form-control', 'w-100'); // Wider width class added
+            modeSelect.classList.add('form-select', 'w-100'); // Wider width class added
+            initialAmountInput.classList.add('form-control', 'w-100'); // Wider width class added
+
+            // Set attributes and properties for input elements
+            nameInput.type = 'text';
+            nameInput.placeholder = 'Enter name';
+            nameInput.id = `nameInput${newRowId}`;
+
+            amountInput.type = 'number';
+            amountInput.value = '0';
+            amountInput.id = `amountInput${newRowId}`;
+
+            frequencyInput.type = 'number';
+            frequencyInput.value = '1';
+            frequencyInput.id = `frequencyInput${newRowId}`;
+
+            modeSelect.id = `modeSelect${newRowId}`;
+            modeSelect.addEventListener('change', () => toggleInitialAmount(modeSelect));
+            const linearOption = document.createElement('option');
+            linearOption.value = 'linear';
+            linearOption.text = 'Linear';
+            const percentageOption = document.createElement('option');
+            percentageOption.value = 'percentage';
+            percentageOption.text = 'Percentage';
+            modeSelect.appendChild(linearOption);
+            modeSelect.appendChild(percentageOption);
+
+            initialAmountInput.type = 'number';
+            initialAmountInput.value = '0';
+            initialAmountInput.disabled = true; // Disable the input initially
+            initialAmountInput.id = `initialAmountInput${newRowId}`;
+            initialAmountInput.placeholder = 'Initial Amount';
+
+            // Append input elements to respective cells
+            nameCell.appendChild(nameInput);
+            amountCell.appendChild(amountInput);
+            frequencyCell.appendChild(frequencyInput);
+            modeCell.appendChild(modeSelect);
+            initialAmountCell.appendChild(initialAmountInput);
+
+            // Append cells to the new row
+            newRow.appendChild(nameCell);
+            newRow.appendChild(amountCell);
+            newRow.appendChild(frequencyCell);
+            newRow.appendChild(modeCell);
+            newRow.appendChild(initialAmountCell);
+
+            // Create remove button and add Bootstrap classes
+            const removeButton = document.createElement('button');
+            removeButton.innerText = 'Remove';
+            removeButton.classList.add('btn', 'btn-danger', 'remove-btn'); // Bootstrap button classes
+            removeButton.addEventListener('click', () => removeRow(newRow));
+
+            // Append remove button to the new row
+            newRow.appendChild(removeButton);
+
+            // Append the new row to the table
+            moneyFlowTable.appendChild(newRow);
+
+            // Update the chart after adding the new row
+            updateChart();
+        }
+
+
+
+        function removeRow(row) {
+            row.remove();
+            updateChart();
+        }
+
+        function updateChartIndividual() {
+            const timeInput = document.getElementById('timeInput');
+            const time = parseInt(timeInput.value);
+            const initialInput = document.getElementById('initialInput');
+            const initialInputValue = parseInt(initialInput.value) / 2;
+
+            // Clear any existing datasets
+            wealthChart.data.datasets = [];
+
+            const incomeTable = document.getElementById('incomeTable');
+            const rows = incomeTable.querySelectorAll('tr');
+
+            for (let rowIndex = 1; rowIndex < rows.length; rowIndex++) {
+                const row = rows[rowIndex];
+                const amount = parseFloat(row.querySelector('input[type="number"]').value);
+                const frequency = parseFloat(row.querySelectorAll('input[type="number"]')[1].value);
+                const name = row.querySelector('input[type="text"]').value;
+                const mode = row.querySelector('select').value;
+                let initialAmount = parseFloat(row.querySelectorAll('input[type="number"]')[2].value);
+
+                const yValuesIndividual = Array(time).fill(initialInputValue);
+                let totalWealth = initialInputValue;
+                let newPercent = 0;
+
+                for (let i = 0; i < time; i++) {
+                    if ((i + 1) % frequency === 0) {
+                        if (mode == 'linear') {
+                            totalWealth += amount;
+                        } 
+                        else if (mode == 'percentage') {
+                            newPercent = initialAmount
+
+                            totalWealth += (amount / 100) * newPercent;
+
+                            initialAmount +=amount/100 * newPercent;
+                        }
+                    }
+                    yValuesIndividual[i] += totalWealth;
+                }
+
+                // Create a new dataset for each money flow
+                const dataset = {
+                    label: name,
+                    data: yValuesIndividual,
+                    borderColor: getRandomColor(),
+                    borderWidth: 1,
+                    fill: false
+                };
+                wealthChart.data.datasets.push(dataset);
+            }
+
+            wealthChart.data.labels = Array.from({ length: time }, (_, index) => index + 1);
+            wealthChart.options.scales.y = {};
+            wealthChart.update();
+        }
+
+
+
+        function getRandomColor() {
+            if (colors.length === 0) {
+                // If colors array is empty, generate new random color
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            } else {
+                // Use existing colors from the array
+                const color = colors.shift(); // Remove and return the first color from the array
+                colors.push(color); // Add the color back to the end of the array for reuse
+                return color;
+            }
+        }
+    </script>
+</body>
+
+</html>
